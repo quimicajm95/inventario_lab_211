@@ -61,56 +61,48 @@ tr.r{cursor:pointer}tr.r:hover td{background:#101a2e}
 .dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 18px}
 .dl div span{display:block;font-size:11.5px;color:var(--mut)}
 .empty{padding:40px 10px;text-align:center;color:var(--mut)}
-@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.strip{padding-top:8px}.chip{border:1px solid var(--line);border-radius:4px}.tag.plain{}.strip{padding-top:8px}.chip{border:1px solid var(--line);border-radius:4px}.tag.plain{}.okmsg{border-color:#1f5a41;background:#08180f;color:var(--ok)}#v-form .grid{grid-template-columns:380px 1fr}@media(max-width:860px){#v-form .grid{grid-template-columns:1fr}}@media(max-width:860px){.grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="v-main">
 <header>
-  <div><h1>Inventario de reactivos</h1><div class="sub">Laboratorio de química - 2-11</div></div>
+  <div><h1>Inventario de reactivos</h1><div class="sub">Inventario 2026 · orgánicos por número de carbonos, inorgánicos, ácidos y disolventes</div></div>
   <div class="src">
     <span class="pill" id="srcInfo">sin datos</span>
-    <label class="btn primary" for="file" tabindex="0">Cargar Excel del inventario</label>
-    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
-    <button id="demo" type="button">Ver datos de ejemplo</button>
+    <label class="btn primary" for="file" tabindex="0">Cargar otro Excel</label>
+    <input type="file" id="file" accept=".xlsx,.xls" hidden>
+    <button id="goForm" class="primary" type="button">Actualizar inventario</button>
+    <button id="orig" type="button">Restaurar archivo incluido</button>
   </div>
 </header>
 <div id="notice"></div>
 
 <section class="ruler">
-  <h2>Número de carbonos <span class="hint">Selecciona uno o varios; la altura indica cuántos reactivos coinciden con el resto de filtros.</span></h2>
+  <h2>Número de carbonos <span class="hint">Selecciona uno o varios; la altura indica cuántos compuestos orgánicos coinciden con los demás filtros.</span></h2>
   <div class="strip" id="strip"></div>
 </section>
 
 <div class="grid">
   <form class="panel" id="f" autocomplete="off">
     <h2>Búsqueda avanzada</h2>
-    <label for="q_nombre">Nombre del reactivo</label><input id="q_nombre" placeholder="p. ej. etanol">
-    <div class="row2">
-      <div><label for="q_formula">Fórmula</label><input id="q_formula" placeholder="C2H6O"></div>
-      <div><label for="q_cas">CAS</label><input id="q_cas" placeholder="64-17-5"></div>
-    </div>
-    <label for="q_grupo">Grupo funcional</label><select id="q_grupo"><option value="">Todos</option></select>
-    <div class="row2">
-      <div><label for="q_estado">Estado físico</label><select id="q_estado"><option value="">Todos</option></select></div>
-      <div><label for="q_ubicacion">Ubicación</label><select id="q_ubicacion"><option value="">Todas</option></select></div>
-    </div>
-    <label for="q_marca">Marca / proveedor</label><input id="q_marca">
-    <div class="row2">
-      <div><label for="q_pureza">Pureza mín. (%)</label><input id="q_pureza" type="number" min="0" max="100" step="any"></div>
-      <div><label for="q_cant">Cantidad mín.</label><input id="q_cant" type="number" min="0" step="any"></div>
-    </div>
-    <label for="q_cad">Caducidad</label>
-    <select id="q_cad"><option value="">Cualquiera</option><option value="exp">Caducados</option><option value="90">Caducan en 90 días o menos</option><option value="ok">Vigentes</option></select>
-    <label class="chk"><input type="checkbox" id="q_stock"> Solo con existencias</label>
+    <label for="q_nombre">Nombre del compuesto o código</label><input id="q_nombre" placeholder="p. ej. acetophenone, C7-3">
+    <label for="q_cat">Categoría</label><select id="q_cat"><option value="">Todas</option></select>
+    <label for="q_disp">Disponibilidad</label>
+    <select id="q_disp"><option value="">Todas</option><option value="si">Hay en existencia</option><option value="no">No hay</option><option value="sd">Sin dato</option></select>
+    <label for="q_pres">Presentación</label>
+    <select id="q_pres"><option value="">Cualquiera</option><option value="m">Sólido (g, kg, mg)</option><option value="v">Líquido (mL, L)</option></select>
+    <label for="q_ub">Ubicación / gaveta</label><input id="q_ub" placeholder="Arriba, Abajo, B…">
+    <label for="q_obs">Observaciones</label><input id="q_obs" placeholder="tapa dañada, gaveta…">
+    <label class="chk"><input type="checkbox" id="q_frio"> Solo refrigerados</label>
     <div class="actions"><button type="submit" class="primary">Buscar</button><button type="button" id="clear">Limpiar</button></div>
   </form>
 
   <section class="panel">
     <div class="meta"><span id="count"></span><span>Clic en una fila para ver el detalle</span></div>
     <div class="tw"><table>
-      <thead><tr><th>Reactivo</th><th>CAS</th><th>C</th><th>Grupo</th><th>Ubicación</th><th>Existencias</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Compuesto</th><th>Grupo</th><th>Frascos</th><th>Cantidad</th><th>Ubicación</th><th>Estado</th></tr></thead>
       <tbody id="body"></tbody>
     </table></div>
     <div class="empty" id="empty" hidden></div>
@@ -118,154 +110,224 @@ tr.r{cursor:pointer}tr.r:hover td{background:#101a2e}
 </div>
 </div>
 
+<div class="wrap" id="v-form" hidden>
+<header>
+  <div><h1>Actualizar inventario</h1><div class="sub">Agrega un compuesto nuevo o modifica uno existente escribiendo su nombre</div></div>
+  <div class="src"><button id="exp" type="button" hidden>Descargar Excel actualizado</button><button id="back" type="button">Volver al inventario</button></div>
+</header>
+<div id="fmsg"></div>
+<div class="grid">
+  <form class="panel" id="uf" autocomplete="off">
+    <h2>Datos del compuesto</h2>
+    <label for="u_nombre">Nombre del compuesto</label><input id="u_nombre" list="names"><datalist id="names"></datalist>
+    <div class="row2">
+      <div><label for="u_cat">Categoría</label><select id="u_cat"></select></div>
+      <div><label for="u_c">Carbonos</label><input id="u_c" type="number" min="1" max="24"></div>
+    </div>
+    <div class="row2">
+      <div><label for="u_frascos">Frascos</label><input id="u_frascos" type="number" min="0" step="1"></div>
+      <div><label for="u_cant">Cantidad</label><input id="u_cant" placeholder="100g/250g"></div>
+    </div>
+    <div class="row2">
+      <div><label for="u_ub">Ubicación</label><input id="u_ub" placeholder="Arriba, Abajo"></div>
+      <div><label for="u_gav">Gaveta</label><input id="u_gav" placeholder="A, B"></div>
+    </div>
+    <label for="u_disp">Disponibilidad</label><select id="u_disp"><option value="si">Hay en existencia</option><option value="no">No hay</option></select>
+    <label class="chk"><input type="checkbox" id="u_frio"> Se guarda en refrigerador</label>
+    <label for="u_obs">Observaciones</label><input id="u_obs" placeholder="tapa dañada…">
+  </form>
+  <section class="panel"><h2>Resumen antes de guardar</h2><div id="sum"></div>
+    <div class="actions"><button id="confirm" type="button" class="primary">Confirmar ingreso</button><button id="cancelf" type="button">Limpiar</button></div>
+  </section>
+</div>
+</div>
 <script>
-const ALIAS={
- nombre:['nombre','reactivo','compuesto','name','sustancia'],
- formula:['formula','formula molecular'],
- cas:['cas','n cas','no cas','numero cas'],
- carbonos:['carbonos','c','n carbonos','numero de carbonos','no de carbonos'],
- grupo:['grupo funcional','grupo','familia','tipo','clase'],
- ubicacion:['ubicacion','estante','localizacion','gabinete','posicion'],
- estado:['estado fisico','estado','fase'],
- pureza:['pureza','purity','pureza %'],
- cantidad:['cantidad','stock','existencia','existencias','cantidad disponible'],
- unidad:['unidad','unidades'],
- marca:['marca','proveedor','fabricante'],
- caducidad:['caducidad','vencimiento','fecha de caducidad','fecha de vencimiento'],
- peligro:['peligro','riesgo','pictograma','pictogramas','peligrosidad','hazard']
-};
-const LABEL={nombre:'Nombre',formula:'Fórmula',cas:'CAS',carbonos:'Carbonos',grupo:'Grupo funcional',ubicacion:'Ubicación',estado:'Estado físico',pureza:'Pureza',cantidad:'Cantidad',unidad:'Unidad',marca:'Marca / proveedor',caducidad:'Caducidad',peligro:'Peligrosidad'};
-const $=id=>document.getElementById(id);
-const norm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9% ]/g,' ').replace(/\s+/g,' ').trim();
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let DATA=[],SRC='',SEL=new Set();
-
-function fieldFor(header){
-  const h=norm(header);
-  for(const k in ALIAS) if(ALIAS[k].includes(h)) return k;
-  for(const k in ALIAS) if(k!=='carbonos' && ALIAS[k].some(a=>a.length>3&&h.includes(a))) return k;
-  return null;
-}
-function toDate(v){
-  if(!v) return null;
-  if(v instanceof Date) return isNaN(v)?null:v;
-  const d=new Date(v); if(!isNaN(d)) return d;
-  const m=String(v).match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
-  return m? new Date(+m[3]<100?2000+ +m[3]:+m[3],+m[2]-1,+m[1]):null;
-}
-const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?null:n};
-function carbonsFrom(rec,sheet){
-  let n=num(rec.carbonos); if(n!=null) return Math.round(n);
-  const m=String(rec.formula||'').match(/C(\d*)(?![a-z])/);
-  if(m) return m[1]?+m[1]:1;
-  const s=String(sheet).match(/c\s*(\d+)/i)||String(sheet).match(/^\s*(\d+)/);
-  return s?+s[1]:null;
-}
-function parseBook(wb){
+const CAT={'inorganicos':'Inorgánicos','acidos':'Ácidos','liquidos inorganicos':'Líquidos inorgánicos','campana':'Campana','disolventes':'Disolventes','solv deut':'Disolventes deuterados'};
+const sn=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9%+ ]/g,' ').replace(/\s+/g,' ').trim();
+const tx=v=>v instanceof Date?v.toISOString().slice(0,10):String(v==null?'':v).replace(/\s+/g,' ').trim();
+function parseBook(XL,wb){
   const out=[];
-  wb.SheetNames.forEach(name=>{
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:'',raw:true});
-    if(!rows.length) return;
-    const map={};Object.keys(rows[0]).forEach(h=>{map[h]=fieldFor(h)});
-    rows.forEach(r=>{
-      const rec={extra:{}};
-      for(const h in r){
-        const k=map[h]; const v=r[h]; if(v===''||v==null) continue;
-        if(k && rec[k]==null) rec[k]=v; else if(!k) rec.extra[h]=v instanceof Date?v.toISOString().slice(0,10):v;
-      }
-      if(!rec.nombre && !rec.formula && !rec.cas) return;
-      rec.c=carbonsFrom(rec,name); rec.hoja=name;
-      const d=toDate(rec.caducidad); rec.dias=d?Math.round((d-Date.now())/864e5):null;
-      if(d) rec.caducidad=d.toISOString().slice(0,10);
-      out.push(rec);
-    });
-  });
+  for(const name of wb.SheetNames){
+    const key=sn(name); if(key==='refrigerador') continue;
+    const cm=key.match(/^c(\d+)/); let cat,carb=null;
+    if(cm){cat='Orgánicos';carb=+cm[1]}else if(CAT[key])cat=CAT[key];else continue;
+    const plus=/\+/.test(key);
+    const rows=XL.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:true});
+    let hr=-1;
+    for(let i=0;i<Math.min(8,rows.length);i++) if(rows[i].some(c=>/nombre|envases/i.test(tx(c)))){hr=i;break}
+    const col={};
+    if(hr>=0){
+      const H=rows[hr].map(tx);
+      H.forEach((h,i)=>{const s=sn(h);
+        if(/nombre/.test(s)&&col.nombre==null)col.nombre=i;
+        else if(/frasco|envases/.test(s))col.frascos=i;
+        else if(/^cantidad/.test(s))col.cantidad=i;
+        else if(/^obs/.test(s))col.obs=i;
+        else if(/entrada/.test(s))col.entrada=i;
+        else if(/ubicaci/.test(s)&&col.ub==null)col.ub=i;
+        else if(/gaveta|gabeta/.test(s))col.gav=i;});
+      if(col.nombre==null)col.nombre=col.frascos-1;
+      if(col.frascos==null&&/^#?$/.test(H[col.nombre+1]||''))col.frascos=col.nombre+1;
+    }else Object.assign(col,{nombre:1,frascos:2,cantidad:3});
+    const used=new Set(Object.values(col));
+    const ubCols=col.ub!=null?rows[0].map((_,i)=>i).filter(i=>i>=col.ub&&i!==col.entrada&&i!==col.gav):[];
+    ubCols.forEach(i=>used.add(i));
+    for(let r=hr+1;r<rows.length;r++){
+      const row=rows[r],nombre=tx(row[col.nombre]);
+      if(!nombre||/^nombre/i.test(nombre)) continue;
+      const codigo=col.nombre>0?tx(row[col.nombre-1]):'';
+      if(col.nombre>0)used.add(col.nombre-1);
+      const fr=col.frascos!=null?row[col.frascos]:'';
+      const frN=parseFloat(String(fr).replace(',','.'));
+      const cant=col.cantidad!=null?tx(row[col.cantidad]):'';
+      let obs=col.obs!=null?tx(row[col.obs]):'';
+      const extra=row.map((v,i)=>(!used.has(i)&&i>col.nombre)?tx(v):'').filter(Boolean);
+      const ub=ubCols.map(i=>tx(row[i])).filter(Boolean).join(' ');
+      const notas=[obs,...extra].filter(Boolean).join(' · ');
+      const all=notas+' '+tx(fr);
+      const disp=/no\s*hay|agotad/i.test(all)||frN===0?'no':(frN>0||cant)?'si':'sd';
+      let pres='';
+      if(/\d\s*(k?g|mg|gr)\b/i.test(cant))pres+='m';
+      if(/\d\s*(m?l|litros?|lt)\b/i.test(cant))pres+='v';
+      out.push({nombre,cat,c:carb,plus,codigo,frascos:isNaN(frN)?null:frN,cantidad:cant,ub,gav:col.gav!=null?tx(row[col.gav]):'',entrada:col.entrada!=null?tx(row[col.entrada]):'',notas,hoja:name.trim(),disp,frio:/refriger/i.test(notas+' '+ub),pres,n:out.length});
+    }
+  }
   return out;
 }
-function setData(rows,src,isDemo){
-  DATA=rows;SRC=src;SEL=new Set();
-  $('srcInfo').innerHTML=`<b>${rows.length}</b> reactivos · ${esc(src)}`;
-  $('notice').innerHTML=isDemo?'<div class="notice">Estás viendo datos de ejemplo. Carga el Excel de tu inventario para consultar los reactivos reales.</div>':'';
-  fillSelects();render();
+function buildWb(XL,rows){
+  const g={};rows.slice().sort((a,b)=>a.n-b.n).forEach(r=>(g[r.hoja]=g[r.hoja]||[]).push(r));
+  const wb=XL.utils.book_new();
+  for(const h in g){
+    const ws=XL.utils.json_to_sheet(g[h].map(r=>({'Código':r.codigo,'Nombre del compuesto':r.nombre,'# de Frascos':r.frascos==null?'':r.frascos,'Cantidad':r.cantidad,'Observaciones':r.notas,'Entrada':r.entrada,'Ubicación (estante)':r.ub,'Gaveta':r.gav})));
+    XL.utils.book_append_sheet(wb,ws,h.slice(0,31));
+  }
+  return wb;
 }
-function fillSelects(){
-  [['grupo','q_grupo','Todos'],['estado','q_estado','Todos'],['ubicacion','q_ubicacion','Todas']].forEach(([k,id,all])=>{
-    const vals=[...new Set(DATA.map(r=>r[k]).filter(Boolean).map(String))].sort((a,b)=>a.localeCompare(b,'es'));
-    $(id).innerHTML=`<option value="">${all}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join('');
-  });
+
+const EMBED_B64="...BASE64_DEL_EXCEL...";
+const $=id=>document.getElementById(id);
+const norm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9%+ ]/g,' ').replace(/\s+/g,' ').trim();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CATS=['Orgánicos','Inorgánicos','Ácidos','Líquidos inorgánicos','Disolventes','Disolventes deuterados','Campana'];
+const EMBED_NAME='2026_inventario_actualizando_2026.xls';
+let DATA=[],SEL=new Set(),SRC='',EDIT=null;
+function setData(rows,src){
+  DATA=rows;SEL=new Set();SRC=src;
+  $('srcInfo').innerHTML=`<b>${rows.length}</b> registros · ${esc(src)}`;
+  $('q_cat').innerHTML='<option value="">Todas</option>'+CATS.filter(c=>rows.some(r=>r.cat===c)).map(c=>`<option>${c}</option>`).join('');
+  render();
 }
+const has=(v,q)=>{const t=norm(v??'');return norm(q).split(' ').filter(Boolean).every(w=>t.includes(w))};
 const val=id=>$(id).value.trim();
-const has=(v,q)=>!q||norm(v??'').includes(norm(q));
 function match(r,skipC){
-  if(!skipC&&SEL.size&&!SEL.has(r.c)) return false;
-  if(!has(r.nombre,val('q_nombre'))||!has(r.formula,val('q_formula'))||!has(r.cas,val('q_cas'))||!has(r.marca,val('q_marca'))) return false;
-  for(const [k,id] of [['grupo','q_grupo'],['estado','q_estado'],['ubicacion','q_ubicacion']]) if(val(id)&&String(r[k]||'')!==val(id)) return false;
-  const p=num(val('q_pureza')); if(p!=null&&!(num(r.pureza)>=p)) return false;
-  const q=num(val('q_cant')); if(q!=null&&!(num(r.cantidad)>=q)) return false;
-  if($('q_stock').checked&&!(num(r.cantidad)>0)) return false;
-  const cad=val('q_cad');
-  if(cad==='exp'&&!(r.dias!=null&&r.dias<0)) return false;
-  if(cad==='90'&&!(r.dias!=null&&r.dias>=0&&r.dias<=90)) return false;
-  if(cad==='ok'&&!(r.dias==null||r.dias>=0)) return false;
+  if(!skipC&&SEL.size&&!(r.cat==='Orgánicos'&&SEL.has(r.c))) return false;
+  if(!has(r.nombre+' '+r.codigo,val('q_nombre'))||!has(r.ub+' '+r.gav,val('q_ub'))||!has(r.notas,val('q_obs'))) return false;
+  if(val('q_cat')&&r.cat!==val('q_cat')) return false;
+  if(val('q_disp')&&r.disp!==val('q_disp')) return false;
+  if(val('q_pres')&&!r.pres.includes(val('q_pres'))) return false;
+  if($('q_frio').checked&&!r.frio) return false;
   return true;
 }
 function estado(r){
-  if(r.dias==null) return '';
-  if(r.dias<0) return '<span class="tag bad">Caducado</span>';
-  if(r.dias<=90) return `<span class="tag warn">Caduca en ${r.dias} d</span>`;
-  return '<span class="tag ok">Vigente</span>';
+  return (r.disp==='si'?'<span class="tag ok">Hay</span>':r.disp==='no'?'<span class="tag bad">No hay</span>':'<span class="tag">Sin dato</span>')+(r.frio?'<span class="tag warn">Refrigerador</span>':'');
 }
+const carbLabel=r=>r.c==null?r.cat:'C'+r.c+(r.plus?'+':'');
 function renderStrip(){
-  const cs=DATA.map(r=>r.c).filter(c=>c!=null);
-  if(!cs.length){$('strip').innerHTML='<span class="sub">Sin datos de carbonos.</span>';return}
-  const lo=Math.min(...cs),hi=Math.min(Math.max(...cs),60),cnt={};
-  DATA.forEach(r=>{if(r.c!=null&&match(r,true))cnt[r.c]=(cnt[r.c]||0)+1});
+  const cnt={};DATA.forEach(r=>{if(r.cat==='Orgánicos'&&match(r,true))cnt[r.c]=(cnt[r.c]||0)+1});
   const mx=Math.max(1,...Object.values(cnt));let h='';
-  for(let c=lo;c<=hi;c++){const n=cnt[c]||0;
-    h+=`<button type="button" class="chip" data-c="${c}" aria-pressed="${SEL.has(c)}" title="${n} reactivos con C${c}"><span class="n">${n}</span><span class="bar" style="height:${Math.round(n/mx*38)}px"></span><span class="c">C${c}</span></button>`}
+  for(let c=1;c<=24;c++){const n=cnt[c]||0;
+    h+=`<button type="button" class="chip" data-c="${c}" aria-pressed="${SEL.has(c)}" title="${n} compuestos con ${c} carbonos"><span class="n">${n}</span><span class="bar" style="height:${Math.round(n/mx*38)}px"></span><span class="c">C${c}${c===24?'+':''}</span></button>`}
   $('strip').innerHTML=h;
 }
 function render(){
   renderStrip();
-  const rows=DATA.filter(r=>match(r)).sort((a,b)=>(a.c??999)-(b.c??999)||String(a.nombre||'').localeCompare(String(b.nombre||''),'es'));
-  $('count').innerHTML=`<b>${rows.length}</b> de ${DATA.length} reactivos`;
-  $('body').innerHTML=rows.slice(0,500).map((r,i)=>{
-    const pel=String(r.peligro||'').split(/[,;\/]/).map(s=>s.trim()).filter(Boolean).map(s=>`<span class="tag warn">${esc(s)}</span>`).join('');
-    return `<tr class="r" data-i="${i}"><td>${esc(r.nombre||'—')}<br><span class="f">${esc(r.formula||'')}</span></td><td class="cas">${esc(r.cas||'')}</td><td class="cc">${r.c??''}</td><td>${esc(r.grupo||'')}</td><td>${esc(r.ubicacion||'')}</td><td>${esc(r.cantidad??'')} ${esc(r.unidad||'')}</td><td>${estado(r)}</td></tr>
-    <tr class="det" hidden><td colspan="7"><div class="dl">${['formula','cas','carbonos','grupo','estado','pureza','marca','ubicacion','cantidad','caducidad'].map(k=>{const v=k==='carbonos'?r.c:r[k];return v!=null&&v!==''?`<div><span>${LABEL[k]}</span>${esc(v)}${k==='pureza'&&!/%/.test(v)?' %':''}</div>`:''}).join('')}${Object.entries(r.extra||{}).map(([k,v])=>`<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}${pel?`<div><span>Peligrosidad</span>${pel}</div>`:''}<div><span>Hoja de origen</span>${esc(r.hoja)}</div></div></td></tr>`}).join('');
-  const e=$('empty');e.hidden=rows.length>0;
-  e.textContent=DATA.length?'Ningún reactivo coincide. Ajusta o limpia los filtros.':'Carga el archivo Excel del inventario para empezar.';
+  const rows=DATA.filter(r=>match(r)).sort((a,b)=>CATS.indexOf(a.cat)-CATS.indexOf(b.cat)||(a.c??0)-(b.c??0)||a.n-b.n);
+  $('count').innerHTML=`<b>${rows.length}</b> de ${DATA.length} registros`+(rows.length>600?' (mostrando 600, afina la búsqueda)':'');
+  $('body').innerHTML=rows.slice(0,600).map(r=>{
+    const d=[['Código',r.codigo],['Hoja de origen',r.hoja],['Frascos',r.frascos],['Cantidad',r.cantidad],['Ubicación',r.ub],['Gaveta',r.gav],['Entrada',r.entrada],['Observaciones',r.notas]].filter(x=>x[1]!==''&&x[1]!=null).map(x=>`<div><span>${x[0]}</span>${esc(x[1])}</div>`).join('');
+    return `<tr class="r"><td>${esc(r.nombre)}</td><td class="cc">${esc(carbLabel(r))}</td><td class="cc">${r.frascos??''}</td><td>${esc(r.cantidad)}</td><td>${esc([r.ub,r.gav&&'gaveta '+r.gav].filter(Boolean).join(', '))}</td><td>${estado(r)}</td></tr><tr class="det" hidden><td colspan="6"><div class="dl">${d}</div></td></tr>`}).join('');
+  const e=$('empty');e.hidden=rows.length>0;e.textContent='Ningún compuesto coincide. Ajusta o limpia los filtros.';
 }
+function load(){const wb=XLSX.read(EMBED_B64,{type:'base64',cellDates:true});setData(parseBook(XLSX,wb),EMBED_NAME+' (incluido)')}
 $('strip').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const c=+b.dataset.c;SEL.has(c)?SEL.delete(c):SEL.add(c);render()});
 $('body').addEventListener('click',e=>{const t=e.target.closest('tr.r');if(t)t.nextElementSibling.hidden=!t.nextElementSibling.hidden});
 $('f').addEventListener('input',render);
 $('f').addEventListener('submit',e=>{e.preventDefault();render()});
 $('clear').addEventListener('click',()=>{$('f').reset();SEL=new Set();render()});
+$('orig').addEventListener('click',()=>{try{localStorage.removeItem('inv2')}catch(_){}load()});
 $('file').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   try{
-    const wb=XLSX.read(await f.arrayBuffer(),{cellDates:true});
-    const rows=parseBook(wb);
-    if(!rows.length) throw new Error('No se encontraron filas con nombre, fórmula o CAS.');
-    setData(rows,f.name,false);
-    try{localStorage.setItem('inv',JSON.stringify({rows,src:f.name}))}catch(_){}
+    const rows=parseBook(XLSX,XLSX.read(await f.arrayBuffer(),{cellDates:true}));
+    if(!rows.length)throw new Error('No se encontraron compuestos. Verifica que las hojas sean C1, C2… y tengan columna «Nombre».');
+    setData(rows,f.name);
+    try{localStorage.setItem('inv2',JSON.stringify({rows,src:f.name}))}catch(_){}
+    $('notice').innerHTML='';
   }catch(err){$('notice').innerHTML=`<div class="notice">No se pudo leer el archivo: ${esc(err.message)}</div>`}
   e.target.value='';
 });
-$('demo').addEventListener('click',()=>{
-  const d=(n)=>new Date(Date.now()+n*864e5).toISOString().slice(0,10);
-  const R=[['Metanol','CH4O','67-56-1',1,'Alcohol','Líquido','A-1',2.5,'L',99.8,'Sigma-Aldrich',400,'Inflamable, Tóxico'],
-  ['Ácido fórmico','CH2O2','64-18-6',1,'Ácido carboxílico','Líquido','A-2',1,'L',98,'Merck',30,'Corrosivo'],
-  ['Etanol absoluto','C2H6O','64-17-5',2,'Alcohol','Líquido','A-1',5,'L',99.5,'J.T. Baker',-12,'Inflamable'],
-  ['Acetonitrilo','C2H3N','75-05-8',2,'Nitrilo','Líquido','B-3',0,'L',99.9,'Merck',300,'Inflamable, Nocivo'],
-  ['Acetona','C3H6O','67-64-1',3,'Cetona','Líquido','A-3',8,'L',99.5,'Fermont',700,'Inflamable, Irritante'],
-  ['Glicerol','C3H8O3','56-81-5',3,'Alcohol','Líquido','C-1',1,'L',99,'Sigma-Aldrich',900,''],
-  ['Tolueno','C7H8','108-88-3',7,'Aromático','Líquido','A-4',2,'L',99.8,'Sigma-Aldrich',60,'Inflamable, Tóxico'],
-  ['Ácido benzoico','C7H6O2','65-85-0',7,'Ácido carboxílico','Sólido','D-2',500,'g',99.5,'Merck',1200,'Irritante'],
-  ['Hexano','C6H14','110-54-3',6,'Alcano','Líquido','A-4',4,'L',95,'J.T. Baker',150,'Inflamable, Peligro ambiental']];
-  setData(R.map(a=>({nombre:a[0],formula:a[1],cas:a[2],c:a[3],grupo:a[4],estado:a[5],ubicacion:a[6],cantidad:a[7],unidad:a[8],pureza:a[9],marca:a[10],dias:a[11],caducidad:d(a[11]),peligro:a[12],extra:{},hoja:'C'+a[3]})),'datos de ejemplo',true);
-});
-try{const s=JSON.parse(localStorage.getItem('inv')||'null');if(s&&s.rows&&s.rows.length)setData(s.rows,s.src+' (guardado)',false);else render()}catch(_){render()}
+
+const HOJA={'Inorgánicos':'Inorganicos','Ácidos':'Acidos','Líquidos inorgánicos':'Liquidos inorganicos','Disolventes':'Disolventes','Disolventes deuterados':'Solv Deut','Campana':'CAMPANA'};
+const view=v=>{$('v-main').hidden=v!=='main';$('v-form').hidden=v!=='form';window.scrollTo(0,0)};
+const presOf=c=>(/\d\s*(k?g|mg|gr)\b/i.test(c)?'m':'')+(/\d\s*(m?l|litros?|lt)\b/i.test(c)?'v':'');
+const U=id=>$(id).value.trim();
+const fmsg=(t,c)=>{$('fmsg').innerHTML=t?`<div class="notice ${c||''}">${esc(t)}</div>`:''};
+function persist(){try{localStorage.setItem('inv2',JSON.stringify({rows:DATA,src:SRC}))}catch(_){fmsg('Guardado solo en esta sesión: el navegador no permite almacenamiento local.')}}
+function hojaFor(cat,c){return cat==='Orgánicos'?(DATA.find(r=>r.cat===cat&&r.c===c)||{hoja:'C'+c}).hoja:HOJA[cat]}
+function openForm(){
+  $('names').innerHTML=[...new Set(DATA.map(r=>r.nombre))].map(n=>`<option value="${esc(n)}">`).join('');
+  $('u_cat').innerHTML=CATS.map(c=>`<option>${c}</option>`).join('');
+  clearForm();view('form');
+}
+function clearForm(){$('uf').reset();EDIT=null;fmsg('');fsum()}
+function prefill(){
+  const q=norm(U('u_nombre'));if(!q)return;
+  const r=DATA.find(x=>norm(x.nombre)===q);if(!r||r===EDIT)return;
+  EDIT=r;$('u_cat').value=r.cat;$('u_c').value=r.c??'';$('u_frascos').value=r.frascos??'';$('u_cant').value=r.cantidad;
+  $('u_ub').value=r.ub;$('u_gav').value=r.gav;$('u_disp').value=r.disp==='no'?'no':'si';$('u_frio').checked=r.frio;
+  $('u_obs').value=r.notas.replace(/refrigerador|no\s*hay/ig,'').split(' · ').map(s=>s.trim()).filter(Boolean).join(' · ');
+  fsum();
+}
+function fsum(){
+  const cat=U('u_cat')||'Orgánicos',org=cat==='Orgánicos';$('u_c').disabled=!org;
+  const rows=[['Compuesto',U('u_nombre')],['Categoría',cat+(org&&U('u_c')?' · C'+U('u_c'):'')],['Frascos',U('u_frascos')],['Cantidad',U('u_cant')],['Ubicación',[U('u_ub'),U('u_gav')&&'gaveta '+U('u_gav')].filter(Boolean).join(', ')],['Disponibilidad',$('u_disp').selectedOptions[0]?.text],['Refrigerador',$('u_frio').checked?'Sí':''],['Observaciones',U('u_obs')]].filter(x=>x[1]);
+  $('sum').innerHTML=`<p class="sub">${EDIT?`Se reemplazarán los datos del registro existente (hoja ${esc(EDIT.hoja)}).`:'Se agregará como compuesto nuevo.'}</p><div class="dl">${rows.map(x=>`<div><span>${x[0]}</span>${esc(x[1])}</div>`).join('')}</div>`;
+}
+function confirmForm(){
+  const nombre=U('u_nombre'),cat=U('u_cat'),org=cat==='Orgánicos',c=parseInt(U('u_c'),10);
+  if(!nombre) return fmsg('Escribe el nombre del compuesto.');
+  if(org&&!(c>=1&&c<=24)) return fmsg('Indica el número de carbonos (de 1 a 24).');
+  const fr=U('u_frascos')===''?null:Math.max(0,parseFloat(U('u_frascos')));
+  const notas=[U('u_disp')==='no'&&'NO HAY',$('u_frio').checked&&'Refrigerador',U('u_obs')].filter(Boolean).join(' · ');
+  const cc=org?c:null,same=EDIT&&EDIT.cat===cat&&EDIT.c===cc;
+  const hoja=same?EDIT.hoja:hojaFor(cat,c);
+  const cnt=DATA.filter(r=>r.hoja===hoja).length+1;
+  const rec=Object.assign({},EDIT||{},{nombre,cat,c:cc,plus:/\+/.test(hoja),hoja,frascos:fr,cantidad:U('u_cant'),ub:U('u_ub'),gav:U('u_gav'),notas,disp:U('u_disp'),frio:$('u_frio').checked,pres:presOf(U('u_cant')),
+    codigo:same?EDIT.codigo:org?`C${c}-${cnt}`:cat==='Inorgánicos'?String(cnt):'',
+    entrada:EDIT?EDIT.entrada:new Date().toISOString().slice(0,10),n:EDIT?EDIT.n:Math.max(0,...DATA.map(r=>r.n))+1});
+  const nuevo=!EDIT;
+  if(EDIT)DATA[DATA.indexOf(EDIT)]=rec;else DATA.push(rec);
+  if(!/editado/.test(SRC))SRC+=' · editado';
+  $('srcInfo').innerHTML=`<b>${DATA.length}</b> registros · ${esc(SRC)}`;
+  persist();render();
+  $('uf').reset();EDIT=null;fsum();
+  fmsg(`${nuevo?'Ingresado':'Actualizado'}: ${nombre}. Puedes registrar otro compuesto o volver al inventario.`,'okmsg');
+}
+async function exportXlsx(){
+  try{const dl=await claude.use('downloads');
+    await dl.save({filename:'inventario_actualizado.xlsx',data:XLSX.write(buildWb(XLSX,DATA),{type:'array',bookType:'xlsx'})});
+  }catch(e){if(!e||e.code!=='declined')fmsg('No se pudo generar la descarga.')}
+}
+$('goForm').addEventListener('click',openForm);
+$('back').addEventListener('click',()=>view('main'));
+$('confirm').addEventListener('click',confirmForm);
+$('cancelf').addEventListener('click',clearForm);
+$('exp').addEventListener('click',exportXlsx);
+$('uf').addEventListener('input',fsum);
+$('uf').addEventListener('change',()=>{if(document.activeElement===$('u_nombre')||true)prefill();fsum()});
+$('uf').addEventListener('submit',e=>e.preventDefault());
+try{Promise.resolve(window.claude&&claude.use('downloads')).then(d=>{if(d)$('exp').hidden=false}).catch(()=>{})}catch(_){}
+try{const s=JSON.parse(localStorage.getItem('inv2')||'null');if(s&&s.rows&&s.rows.length)setData(s.rows,s.src);else load()}catch(_){load()}
 </script>
 </body>
 </html>
